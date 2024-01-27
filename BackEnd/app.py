@@ -16,7 +16,7 @@ BUFFER_SIZE = 10
 
 CRASH_MODEL_URL = 'http://10.5.229.17:5001/api/stream_data'
 
-USER_URL = 'http://10.5.228.40:port/api/crash_data'
+USER_URL = 'http://10.5.228.40:5001/api/crash_data'
 
 @app.route('/api/signup', methods=['POST'])
 def signup():
@@ -128,11 +128,13 @@ def store_stream_data(phone_number):
 def store_crash_data(phone_number):
     data = request.get_json()
     crash_timestamp = data.get('timestamp')
+    location = data.get('location')
 
     # Insert crash data into the 'crash_data' collection
     crash_data_collection.insert_one({
         'phone_number': phone_number,
         'timestamp': crash_timestamp,
+        'location' : location
     })
 
     # Send data to the other computer's API
