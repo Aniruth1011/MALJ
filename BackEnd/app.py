@@ -16,6 +16,8 @@ BUFFER_SIZE = 10
 
 CRASH_MODEL_URL = 'http://10.5.229.17:5001/api/stream_data'
 
+USER_URL = 'http://10.5.228.40:port/api/crash_data'
+
 @app.route('/api/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -133,8 +135,15 @@ def store_crash_data(phone_number):
         'timestamp': crash_timestamp,
     })
 
-    return jsonify({'message': 'Crash data stored successfully'})
+    # Send data to the other computer's API
+    try:
+        response = requests.post(USER_URL, json=data)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        print('Data sent to the user successfully')
+    except requests.exceptions.RequestException as e:
+        print(f'Error sending data to the user: {e}')
 
+    return jsonify({'message': 'Crash data stored and sent successfully'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='10.5.229.25', port=5000, debug=True)
