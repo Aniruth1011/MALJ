@@ -10,6 +10,7 @@ import torch
 from transformers import RagRetriever, RagSequenceForGeneration, RagTokenizer
 from geopy.distance import geodesic
 import random
+import datetime
 
 
 app = Flask(__name__)
@@ -30,6 +31,23 @@ CRASH_MODEL_URL = 'http://10.5.229.17:5001/api/stream_data'
 def get_distance(lat1, lon1, lat2, lon2):
     # Calculate distance between two geographic coordinates
     return geodesic((lat1, lon1), (lat2, lon2)).km
+
+def get_traffic_conditions():
+    return random.randint(0, 10)
+
+# Function to predict actual arrival time based on planned time and traffic conditions
+def predict_actual_arrival(planned_departure, planned_arrival, traffic_conditions):
+    # Calculate the actual travel time based on planned time and traffic conditions
+    planned_travel_time = planned_arrival - planned_departure
+    actual_travel_time_seconds = max(0, planned_travel_time.total_seconds() - traffic_conditions)
+
+    # Create a timedelta object with the calculated seconds
+    actual_travel_timedelta = datetime.timedelta(seconds=actual_travel_time_seconds)
+
+    # Calculate actual arrival time by adding timedelta to planned departure
+    actual_arrival = planned_departure + actual_travel_timedelta
+
+    return actual_arrival
 
 def get_travel_advisory_with_rag(data, user_location):
    api_key = 'ZhmYKW91RCKGwN47qlsQMJFh4gWwfCHJ'
@@ -273,6 +291,26 @@ def store_stream_data(phone_number):
         return jsonify({'crash_data':crash_data, 'advise': travel_advisory_message})
 
     return jsonify({'message': 'Sensor data stored successfully'})
+
+@app.route('/api/predict_arrival', methods=['POST'])
+def predict_arrival():
+    data = request.get_json()
+
+    # Check if all required fields are present in the request
+    required_fields = ['planned_departure', 'planned_arrival']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    # Parse input data
+    planned_departure = datetime.datetime.strptime(data['planned_departure'], '%Y-%m-%d %H:%M:%S')
+    planned_arrival = datetime.datetime.strptime(data['planned_arrival'], '%Y-%m-%d %H:%M:%S')
+    traffic_conditions = get_traffic_conditions()
+
+    # Call the prediction function
+    actual_arrival = predict_actual_arrival(planned_departure, planned_arrival, traffic_conditions)
+
+    # Return the result
+    return jsonify({'actual_arrival': actual_arrival.strftime('%Y-%m-%d %H:%M:%S')})
 
 if __name__ == '__main__':
     app.run(host='10.5.229.25', port=5000, debug=True)

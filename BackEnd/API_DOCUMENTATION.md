@@ -1,34 +1,36 @@
 
 ---
 
-# Project Documentation: MALJ System
+# MALJ System Documentation
 
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Dependencies](#dependencies)
 3. [API Endpoints](#api-endpoints)
-   - [1. /api/signup](#1-api-signup)
-   - [2. /api/login](#2-api-login)
-   - [3. /api/user_details/<phone_number>](#3-api-user-detailsphone_number)
-   - [4. /api/user_details/<phone_number> (PUT)](#4-api-user-detailsphone_number-put)
-   - [5. /api/stream_data/<phone_number> (POST)](#5-api-stream-dataphone_number-post)
-4. [Sensor Data Processing](#sensor-data-processing)
-   - [1. process_sensor_data(json_data)](#1-process_sensor_datajson_data)
-   - [2. detect_accident_from_json(data, contamination)](#2-detect_accident_from_jsondata-contamination)
-5. [RAG Model Integration](#rag-model-integration)
-   - [get_travel_advisory_with_rag(data, user_location)](#get_travel_advisory_with_ragdata-user_location)
-6. [Server Configuration](#server-configuration)
-   - [Run the Application](#run-the-application)
+    - [3.1 /api/signup](#api-signup)
+    - [3.2 /api/login](#api-login)
+    - [3.3 /api/user_details/<phone_number>](#api-user-details)
+    - [3.4 /api/user_details/<phone_number> (PUT)](#api-update-user-details)
+    - [3.5 /api/stream_data/<phone_number> (POST)](#api-stream-data)
+    - [3.6 /api/predict_arrival (POST)](#api-predict-arrival)
+4. [Functions](#functions)
+    - [4.1 get_distance(lat1, lon1, lat2, lon2)](#function-get-distance)
+    - [4.2 get_traffic_conditions()](#function-get-traffic-conditions)
+    - [4.3 predict_actual_arrival(planned_departure, planned_arrival, traffic_conditions)](#function-predict-actual-arrival)
+    - [4.4 get_travel_advisory_with_rag(data, user_location)](#function-get-travel-advisory)
+    - [4.5 process_sensor_data(json_data)](#function-process-sensor-data)
+    - [4.6 detect_accident_from_json(data, contamination)](#function-detect-accident)
+5. [Running the Application](#running-the-application)
 
 ---
 
 ## 1. Introduction<a name="introduction"></a>
 
-The MALJ System is a Flask-based web application designed to handle user sign-up, login, and real-time sensor data processing. The system detects anomalies in the sensor data and provides travel advisories using a Transformer-based model.
+The MALJ System is a Flask-based application designed to handle user registration, login, and real-time sensor data processing. It includes functionalities such as accident detection, travel advisories, and predicting actual arrival times based on planned departure and arrival times.
 
 ## 2. Dependencies<a name="dependencies"></a>
 
-The MALJ System utilizes the following Python libraries and external services:
+The system relies on the following Python libraries and services:
 
 - Flask
 - Flask-CORS
@@ -42,7 +44,7 @@ The MALJ System utilizes the following Python libraries and external services:
 
 ## 3. API Endpoints<a name="api-endpoints"></a>
 
-### 1. /api/signup<a name="1-api-signup"></a>
+### 3.1 /api/signup<a name="api-signup"></a>
 
 **Method:** POST
 
@@ -55,7 +57,7 @@ The MALJ System utilizes the following Python libraries and external services:
 - Success: `{'message': 'User registered successfully'}`
 - Error: `{'error': 'User already exists'}`
 
-### 2. /api/login<a name="2-api-login"></a>
+### 3.2 /api/login<a name="api-login"></a>
 
 **Method:** POST
 
@@ -67,7 +69,7 @@ The MALJ System utilizes the following Python libraries and external services:
 - Success: `{'message': 'Login successful'}`
 - Error: `{'error': 'Invalid username or password'}`
 
-### 3. /api/user_details/<phone_number><a name="3-api-user-detailsphone_number"></a>
+### 3.3 /api/user_details/<phone_number><a name="api-user-details"></a>
 
 **Method:** GET
 
@@ -75,7 +77,7 @@ The MALJ System utilizes the following Python libraries and external services:
 - Success: User details as JSON
 - Error: `{'error': 'User not found'}`
 
-### 4. /api/user_details/<phone_number> (PUT)<a name="4-api-user-detailsphone_number-put"></a>
+### 3.4 /api/user_details/<phone_number> (PUT)<a name="api-update-user-details"></a>
 
 **Method:** PUT
 
@@ -86,7 +88,7 @@ The MALJ System utilizes the following Python libraries and external services:
 - Success: `{'message': 'User details updated successfully'}`
 - Error: `{'error': 'User not found'}`
 
-### 5. /api/stream_data/<phone_number> (POST)<a name="5-api-stream-dataphone_number-post"></a>
+### 3.5 /api/stream_data/<phone_number> (POST)<a name="api-stream-data"></a>
 
 **Method:** POST
 
@@ -99,23 +101,44 @@ The MALJ System utilizes the following Python libraries and external services:
 - Success: `{'message': 'Sensor data stored successfully'}` or crash data with advisory message
 - Error: `{'error': 'User not found'}`
 
-## 4. Sensor Data Processing<a name="sensor-data-processing"></a>
+### 3.6 /api/predict_arrival (POST)<a name="api-predict-arrival"></a>
 
-### 1. process_sensor_data(json_data)<a name="1-process_sensor_datajson_data"></a>
+**Method:** POST
 
-This function processes raw sensor data from the client, calculates magnitude values, and returns a Pandas DataFrame.
+**Input:**
+- `planned_departure`: Planned departure time (format: `%Y-%m-%d %H:%M:%S`)
+- `planned_arrival`: Planned arrival time (format: `%Y-%m-%d %H:%M:%S`)
 
-### 2. detect_accident_from_json(data, contamination)<a name="2-detect_accident_from_jsondata-contamination"></a>
+**Output:**
+- Success: `{'actual_arrival': 'YYYY-MM-DD HH:MM:SS'}`
 
-This function utilizes Isolation Forest to detect anomalies in the processed sensor data. If anomalies are detected, it assumes an accident.
+## 4. Functions<a name="functions"></a>
 
-## 5. RAG Model Integration<a name="rag-model-integration"></a>
+### 4.1 get_distance(lat1, lon1, lat2, lon2)<a name="function-get-distance"></a>
 
-### get_travel_advisory_with_rag(data, user_location)<a name="get_travel_advisory_with_ragdata-user_location"></a>
+Calculates the distance between two geographic coordinates using the Haversine formula.
 
-This function generates a travel advisory message using the RAG (Retrieval-Augmented Generation) model based on accident data and user location.
+### 4.2 get_traffic_conditions()<a name="function-get-traffic-conditions"></a>
 
-## 6. Server Configuration<a name="server-configuration"></a>
+Generates the traffic conditions.
+
+### 4.3 predict_actual_arrival(planned_departure, planned_arrival, traffic_conditions)<a name="function-predict-actual-arrival"></a>
+
+Predicts the actual arrival time based on planned departure, planned arrival, and traffic conditions.
+
+### 4.4 get_travel_advisory_with_rag(data, user_location)<a name="function-get-travel-advisory"></a>
+
+Generates a travel advisory message using the RAG (Retrieval-Augmented Generation) model based on accident data and user location.
+
+### 4.5 process_sensor_data(json_data)<a name="function-process-sensor-data"></a>
+
+Processes raw sensor data from the client and returns a Pandas DataFrame.
+
+### 4.6 detect_accident_from_json(data, contamination)<a name="function-detect-accident"></a>
+
+Utilizes Isolation Forest to detect anomalies in the processed sensor data. If anomalies are detected, it assumes an accident.
+
+## 5. Running the Application<a name="running-the-application"></a>
 
 To run the application, execute the script with the following command:
 
@@ -127,4 +150,4 @@ The application will run on the specified host and port.
 
 ---
 
-This documentation provides an overview of the MALJ System, its endpoints, data processing functions, and integration with the RAG model. Users can refer to this documentation for understanding and utilizing the system effectively.
+This documentation provides an overview of the MALJ System, its API endpoints, and functions. Users can refer to this documentation for understanding and utilizing the system effectively.
