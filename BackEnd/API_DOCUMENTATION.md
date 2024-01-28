@@ -13,6 +13,7 @@
     - [3.4 /api/user_details/<phone_number> (PUT)](#api-update-user-details)
     - [3.5 /api/stream_data/<phone_number> (POST)](#api-stream-data)
     - [3.6 /api/predict_arrival (POST)](#api-predict-arrival)
+    - [3.7 /api/toll_gate (POST)](#api-toll-gate)
 4. [Functions](#functions)
     - [4.1 get_distance(lat1, lon1, lat2, lon2)](#function-get-distance)
     - [4.2 get_traffic_conditions()](#function-get-traffic-conditions)
@@ -26,7 +27,7 @@
 
 ## 1. Introduction<a name="introduction"></a>
 
-The MALJ System is a Flask-based application designed to handle user registration, login, and real-time sensor data processing. It includes functionalities such as accident detection, travel advisories, and predicting actual arrival times based on planned departure and arrival times.
+The MALJ System is a Flask-based application designed for user registration, login, real-time sensor data processing, crash detection, and travel advisory generation. This documentation provides an overview of its features and functionalities.
 
 ## 2. Dependencies<a name="dependencies"></a>
 
@@ -112,6 +113,16 @@ The system relies on the following Python libraries and services:
 **Output:**
 - Success: `{'actual_arrival': 'YYYY-MM-DD HH:MM:SS'}`
 
+### 3.7 /api/toll_gate (POST)<a name="api-toll-gate"></a>
+
+**Method:** POST
+
+**Input:**
+- `vehicle_number`: List of vehicle numbers identified at a toll
+
+**Output:**
+- Success: `{'Vehicles': vehicle_number}`
+
 ## 4. Functions<a name="functions"></a>
 
 ### 4.1 get_distance(lat1, lon1, lat2, lon2)<a name="function-get-distance"></a>
@@ -150,4 +161,4 @@ The application will run on the specified host and port.
 
 ---
 
-This documentation provides an overview of the MALJ System, its API endpoints, and functions. Users can refer to this documentation for understanding and utilizing the system effectively.
+This documentation provides an in-depth guide to the MALJ System, including its API endpoints and underlying functions. Users can reference this documentation for efficient utilization of the system.

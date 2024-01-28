@@ -12,7 +12,6 @@ from geopy.distance import geodesic
 import random
 import datetime
 
-
 app = Flask(__name__)
 CORS(app)
 
@@ -21,6 +20,9 @@ db = client["MALJ"]
 users_collection = db["users"]
 stream_data_collection = db["stream_data"]
 crash_data_collection = db["crash_data"]
+
+# Variable to track whether a vehicle has been identified at a toll
+identified_at_toll = set()
 
 BUFFER_SIZE = 10
 
@@ -290,6 +292,14 @@ def store_stream_data(phone_number):
 
         return jsonify({'crash_data':crash_data, 'advise': travel_advisory_message})
 
+    vehicle_numbers = user['details'].get('vehicle_number', [])
+
+    for vehicle_number in vehicle_numbers:
+        if vehicle_number in identified_at_toll:
+            identified_at_toll.remove(vehicle_number)
+            return jsonify({'message': f'Vehicle {vehicle_number} has been identified at a toll'})
+
+
     return jsonify({'message': 'Sensor data stored successfully'})
 
 @app.route('/api/predict_arrival', methods=['POST'])
@@ -311,6 +321,18 @@ def predict_arrival():
 
     # Return the result
     return jsonify({'actual_arrival': actual_arrival.strftime('%Y-%m-%d %H:%M:%S')})
+
+@app.route('/api/toll_gate', methods=['POST'])
+def toll_gate():
+    # Assuming you receive the vehicle number in the request
+    data = request.get_json()
+    vehicle_number = data.get('vehicle_number')
+
+    # Update the identified_at_toll set
+    for i in vehicle_number:
+        identified_at_toll.add(i)
+
+    return jsonify({'Vehicles': vehicle_number})
 
 if __name__ == '__main__':
     app.run(host='10.5.229.25', port=5000, debug=True)
