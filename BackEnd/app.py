@@ -147,5 +147,7 @@ def store_crash_data(phone_number):
 
     return jsonify({'message': 'Crash data stored and sent successfully'})
 
+
+
 if __name__ == '__main__':
     app.run(host='10.5.229.25', port=5000, debug=True)
