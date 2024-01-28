@@ -1,91 +1,130 @@
-# Documentation for MALJ Flask Application
 
-## Overview
-This documentation provides an overview and explanation of the functionalities and endpoints of the MALJ Flask application. MALJ is designed to handle user registration, login, user details management, and sensor data handling for potential crash detection.
+---
 
-### Dependencies
-- Flask: Web framework for building the application.
-- Flask-CORS: Extension for handling Cross-Origin Resource Sharing.
-- pymongo: Python driver for MongoDB.
-- requests: Library for making HTTP requests.
+# Project Documentation: MALJ System
 
-### Configuration
-- MongoDB: The application assumes a MongoDB instance running locally on the default port (27017).
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Dependencies](#dependencies)
+3. [API Endpoints](#api-endpoints)
+   - [1. /api/signup](#1-api-signup)
+   - [2. /api/login](#2-api-login)
+   - [3. /api/user_details/<phone_number>](#3-api-user-detailsphone_number)
+   - [4. /api/user_details/<phone_number> (PUT)](#4-api-user-detailsphone_number-put)
+   - [5. /api/stream_data/<phone_number> (POST)](#5-api-stream-dataphone_number-post)
+4. [Sensor Data Processing](#sensor-data-processing)
+   - [1. process_sensor_data(json_data)](#1-process_sensor_datajson_data)
+   - [2. detect_accident_from_json(data, contamination)](#2-detect_accident_from_jsondata-contamination)
+5. [RAG Model Integration](#rag-model-integration)
+   - [get_travel_advisory_with_rag(data, user_location)](#get_travel_advisory_with_ragdata-user_location)
+6. [Server Configuration](#server-configuration)
+   - [Run the Application](#run-the-application)
 
-## Endpoints
+---
 
-### 1. User Registration
+## 1. Introduction<a name="introduction"></a>
 
-- **Endpoint:** `/api/signup`
-- **Method:** `POST`
-- **Parameters:**
-  - `phone_number`: Unique phone number for the user.
-  - `password`: Password for the user account.
-  - `details`: Additional details about the user.
+The MALJ System is a Flask-based web application designed to handle user sign-up, login, and real-time sensor data processing. The system detects anomalies in the sensor data and provides travel advisories using a Transformer-based model.
 
-#### Description
-Registers a new user with the provided details. It checks if the user already exists before registration.
+## 2. Dependencies<a name="dependencies"></a>
 
-### 2. User Login
+The MALJ System utilizes the following Python libraries and external services:
 
-- **Endpoint:** `/api/login`
-- **Method:** `POST`
-- **Parameters:**
-  - `phone_number`: User's phone number.
-  - `password`: User's password.
+- Flask
+- Flask-CORS
+- pymongo
+- requests
+- pandas
+- scikit-learn (IsolationForest)
+- torch (PyTorch)
+- transformers
+- geopy
 
-#### Description
-Authenticates a user based on the provided phone number and password.
+## 3. API Endpoints<a name="api-endpoints"></a>
 
-### 3. Get User Details
+### 1. /api/signup<a name="1-api-signup"></a>
 
-- **Endpoint:** `/api/user_details/<phone_number>`
-- **Method:** `GET`
+**Method:** POST
 
-#### Description
-Retrieves details of a specific user identified by their phone number.
+**Input:**
+- `phone_number`: User's phone number
+- `password`: User's password
+- `details`: Additional user details
 
-### 4. Update User Details
+**Output:**
+- Success: `{'message': 'User registered successfully'}`
+- Error: `{'error': 'User already exists'}`
 
-- **Endpoint:** `/api/user_details/<phone_number>`
-- **Method:** `PUT`
-- **Parameters:**
-  - `details`: New details to update for the user.
+### 2. /api/login<a name="2-api-login"></a>
 
-#### Description
-Updates details of a specific user identified by their phone number.
+**Method:** POST
 
-### 5. Store Stream Data
+**Input:**
+- `phone_number`: User's phone number
+- `password`: User's password
 
-- **Endpoint:** `/api/stream_data/<phone_number>`
-- **Method:** `POST`
-- **Parameters:**
-  - Sensor data: `gyroscope_value`, `accelerometer_value`, `location`.
+**Output:**
+- Success: `{'message': 'Login successful'}`
+- Error: `{'error': 'Invalid username or password'}`
 
-#### Description
-Stores sensor data for a user identified by their phone number. It also sends the data to another computer's API for potential crash detection.
+### 3. /api/user_details/<phone_number><a name="3-api-user-detailsphone_number"></a>
 
-### 6. Store Crash Data
+**Method:** GET
 
-- **Endpoint:** `/api/crash_data/<phone_number>`
-- **Method:** `POST`
-- **Parameters:**
-  - `timestamp`: Timestamp of the crash.
-  - `location`: Location of the crash.
+**Output:**
+- Success: User details as JSON
+- Error: `{'error': 'User not found'}`
 
-#### Description
-Stores crash data for a user identified by their phone number. It also sends the data to the user's API for further processing.
+### 4. /api/user_details/<phone_number> (PUT)<a name="4-api-user-detailsphone_number-put"></a>
 
-## Configuration
-- The application runs on host `10.5.229.25` and port `5000`.
-- It interacts with MongoDB running locally on the default port.
-- It communicates with other services via HTTP requests.
+**Method:** PUT
 
-## Running the Application
-To run the application, execute the script in a Python environment where dependencies are installed. Make sure MongoDB is running locally before starting the Flask application. Use the provided host and port to access the endpoints.
+**Input:**
+- `details`: New user details
+
+**Output:**
+- Success: `{'message': 'User details updated successfully'}`
+- Error: `{'error': 'User not found'}`
+
+### 5. /api/stream_data/<phone_number> (POST)<a name="5-api-stream-dataphone_number-post"></a>
+
+**Method:** POST
+
+**Input:**
+- `gyroscope_value`: Gyroscope data
+- `accelerometer_value`: Accelerometer data
+- `location`: User's location
+
+**Output:**
+- Success: `{'message': 'Sensor data stored successfully'}` or crash data with advisory message
+- Error: `{'error': 'User not found'}`
+
+## 4. Sensor Data Processing<a name="sensor-data-processing"></a>
+
+### 1. process_sensor_data(json_data)<a name="1-process_sensor_datajson_data"></a>
+
+This function processes raw sensor data from the client, calculates magnitude values, and returns a Pandas DataFrame.
+
+### 2. detect_accident_from_json(data, contamination)<a name="2-detect_accident_from_jsondata-contamination"></a>
+
+This function utilizes Isolation Forest to detect anomalies in the processed sensor data. If anomalies are detected, it assumes an accident.
+
+## 5. RAG Model Integration<a name="rag-model-integration"></a>
+
+### get_travel_advisory_with_rag(data, user_location)<a name="get_travel_advisory_with_ragdata-user_location"></a>
+
+This function generates a travel advisory message using the RAG (Retrieval-Augmented Generation) model based on accident data and user location.
+
+## 6. Server Configuration<a name="server-configuration"></a>
+
+To run the application, execute the script with the following command:
 
 ```bash
-python your_script_name.py
+python app.py
 ```
 
-Replace `your_script_name.py` with the name of your Python script containing the Flask application code.
+The application will run on the specified host and port.
+
+---
+
+This documentation provides an overview of the MALJ System, its endpoints, data processing functions, and integration with the RAG model. Users can refer to this documentation for understanding and utilizing the system effectively.
