@@ -33,3 +33,11 @@ Once the number plate has been Detected , we use EasyOCR to get the exact number
 We have access to the number plates against the car owners , using which we can efficiently exact toll. 
 
 The key importance of this feature is that vehicles no longer need to wait 
+
+
+## Accident Detection
+
+We extract GyroScope and accelerometer values using In Built Sensors in android phones while user is driving. This is done in real time , and are stored as Json Files . We have our custom API's and these values are tracked .In case we detect any occurence of an accident , we immeditely notify it to the concerned authorities. We also give  other individuals in the same road travel advisories  regarding the accident in their preferred language . For this,we use Google API for machine translation to display it to them in their prefered language . 
+
+
+
