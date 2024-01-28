@@ -15,6 +15,13 @@ While the use of Fastag has indeed reduced waiting time at toll gates a lot , in
 We thus implement the novel solution of scanning the Number Plate of vehicles in Real Time , thus removing the need to wait at Toll Booth's. 
 Using the vehicle number plate , we can easily exact the toll from their accounts. 
 
+    ## Libraries Used
+    opencv-python 
+    numpy 
+    easyocr 
+    os 
+    tensorflow
+
 
 ## Technical Implementation 
 
