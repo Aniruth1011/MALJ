@@ -53,3 +53,12 @@ Thus we introduce a reward based system , where people who use public transport 
 
 This Gamification aspect helps to spread awareness of environmental aspects of using Public Transport.
 
+
+
+## Reach out to us 
+
+For more queries , feel free to reach out to us 
+
+aniruths10@gmail.com
+mslevin.active@gmail.com
+
