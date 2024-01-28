@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #map {
+            height: 100vh;
+            width: 75%;
+            float: right;
+        }
+        #notifications {
+            width: 25%;
+            height: 100vh;
+            float: left;
+            overflow: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #fff;
+            border-right: 1px solid #ddd;
+        }
+        .notification {
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="notifications">
+        <!-- Notifications will be added here -->
+    </div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+       var map = L.map('map').setView([20.5937, 78.9629], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+        function addMarker(lat, lng) {
+            L.marker([lat, lng]).addTo(map);
+        }
+
+        var licenseNumbers = ["DL-1234", "UP-5678", "HR-9012", "PB-3456", "RJ-7890"]; // Add more license numbers
+        var tollGates = [5443, 5678, 9012, 3456, 7890]; // Add more toll gate numbers
+
+        function addNotification() {
+            var licenseNumber = licenseNumbers[Math.floor(Math.random() * licenseNumbers.length)];
+            var tollGate = tollGates[Math.floor(Math.random() * tollGates.length)];
+
+            var notification = document.createElement("div");
+            notification.className = "notification";
+            notification.innerHTML = "<p>License Number: " + licenseNumber + " has passed through Toll Gate: " + tollGate + "</p>";
+            document.getElementById("notifications").prepend(notification);
+        }
+
+        setInterval(addNotification, 4000); // Change the interval as needed
+    </script>
+</body>
+</html>
