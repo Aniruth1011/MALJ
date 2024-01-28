@@ -6,6 +6,11 @@ import pandas as pd
 from sklearn.ensemble import IsolationForest
 import json
 from datetime import datetime
+import torch
+from transformers import RagRetriever, RagSequenceForGeneration, RagTokenizer
+from geopy.distance import geodesic
+import random
+
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +26,66 @@ BUFFER_SIZE = 10
 CRASH_MODEL_URL = 'http://10.5.229.17:5001/api/stream_data'
 
 # USER_URL = 'http://10.5.228.40:5001/api/crash_data'
+
+def get_distance(lat1, lon1, lat2, lon2):
+    # Calculate distance between two geographic coordinates
+    return geodesic((lat1, lon1), (lat2, lon2)).km
+
+def get_travel_advisory_with_rag(data, user_location):
+   api_key = 'ZhmYKW91RCKGwN47qlsQMJFh4gWwfCHJ'
+   coordinates = f"{data['location']['latitude']},{data['location']['longitude']}"
+   endpoint = f'https://api.tomtom.com/search/2/reverseGeocode/{coordinates}.json'
+   params = {
+    'returnSpeedLimit': 'false',
+    'radius': 10000,
+    'returnRoadUse': 'false',
+    'callback': 'cb',
+    'allowFreeformNewLine': 'false',
+    'returnMatchType': 'false',
+    'view': 'Unified',
+    'key': api_key
+    }
+   response = requests.get(endpoint, params=params)
+   data = response.json()
+   address = data.get('addresses')[0].get('address')
+
+   model_name = 'facebook/rag-sequence-nq' # 'facebook/rag-token-nq'  # "facebook/dpr-ctx_encoder-single-nq-base"     #"facebook/rag-token-nq"  # Replace with your desired RAG model
+   tokenizer = RagTokenizer.from_pretrained(model_name)
+   retriever = RagRetriever.from_pretrained(model_name)
+   #retriever = RagRetriever.from_pretrained("facebook/rag-sequence-nq", index_name="exact", use_dummy_dataset=True)
+
+   #model = RagSequenceForGeneration.from_pretrained("facebook/rag-sequence-nq", retriever=retriever)
+
+   generator = RagSequenceForGeneration.from_pretrained(model_name)
+
+   # Preprocess data
+   latitude = data['location']['latitude']
+   longitude = data['location']['longitude']
+   location = address
+   options = ['low', 'medium', 'high']
+   congestion = random.choice(options)
+
+   # Calculate distance from the accident location
+   user_lat = user_location['latitude']
+   user_lon = user_location['longitude']
+   distance_km = get_distance(latitude, longitude, user_lat, user_lon)
+
+   # Construct input text for retriever
+   input_text = f"Accident at {location}. Distance: {distance_km:.2f} km. Latitude: {latitude}, Longitude: {longitude}. Gyroscope: {gyroscope}, Accelerometer: {accelerometer}. Congestion: {congestion}"
+
+   # Retrieve relevant documents
+   retriever_input = tokenizer(input_text, return_tensors='pt')
+   retrieved_doc_ids, retrieved_doc_scores = retriever(retriever_input)
+
+   # Construct prompt for generator
+   prompt = "Assume that another person is traveling in a vehicle in the same path the above information is related to. Make an informative traffic advisory message highlighting why he should avoid this path, and how far from the accident he is. Be more informative, using insights from the retrieved documents."
+
+   # Generate advisory message with retrieved documents
+   generator_input = tokenizer(prompt, retrieved_doc_ids, return_tensors='pt')
+   generated_ids = generator.generate(generator_input)
+   travel_advisory_message = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
+
+   return travel_advisory_message
 
 def process_sensor_data(json_data):
 
@@ -199,10 +264,13 @@ def store_stream_data(phone_number):
             'location': location,
             'accident_detected': True
         }
+
+        travel_advisory_message = get_travel_advisory_with_rag(crash_data, {"latitude": 1, "longitude": 1})
+
         # Insert crash data into the 'crash_data' collection
         crash_data_collection.insert_one(crash_data)
 
-        return jsonify(crash_data)
+        return jsonify({'crash_data':crash_data, 'advise': travel_advisory_message})
 
     return jsonify({'message': 'Sensor data stored successfully'})
 
