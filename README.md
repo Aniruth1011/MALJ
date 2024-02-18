@@ -57,7 +57,7 @@ This Gamification aspect helps to spread awareness of environmental aspects of u
 
 ## Reach out to us 
 
-For more queries , feel free to reach out to us 
+For more queries , feel free to reach out to us.
 
 aniruths10@gmail.com
 mslevin.active@gmail.com
